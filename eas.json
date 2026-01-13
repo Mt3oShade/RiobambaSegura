@@ -9,7 +9,8 @@
         "image": "latest",
         "buildType": "apk",
         "distribution": "internal",
-        "channel": "production"
+        "channel": "production",
+        "gradleCommand": ":app:assembleRelease"
       }
     },
     "development": {

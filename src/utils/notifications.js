@@ -19,8 +19,13 @@ export async function registerForPushNotificationsAsync() {
     console.log('Permiso de notificaciones denegado');
     return null;
   }
-
-  if (Constants.appOwnership === 'standalone') {
+  
+  console.log('Entorno de Ejecucion', Constants.executionEnvironment);
+  // ✅ Usa executionEnvironment en lugar de appOwnership
+  if (
+    Constants.executionEnvironment === 'standalone' ||
+    Constants.executionEnvironment === 'storeClient'
+  ) {
     try {
       const token = (await Notifications.getDevicePushTokenAsync()).data;
       console.log('✅ FCM Token:', token);
