@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "805605188742",
+    "project_id": "riosegura-upc",
+    "storage_bucket": "riosegura-upc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:805605188742:android:6f42a1829f0ebced851d07",
+        "android_client_info": {
+          "package_name": "com.upcriobamba.upcmovil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2wF05WdljBM4y9jUrK_2-JBvd-ARSdCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

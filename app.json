@@ -1,4 +1,70 @@
 {
-  "name": "SeguridadPolicial",
-  "slug": "SeguridadPolicial"
+  "expo": {
+    "name": "Riobamba Segura",
+    "slug": "riobamba-segura",
+    "version": "1.0.0",
+    "newArchEnabled": true,
+    "orientation": "portrait",
+    "icon": "./assets/favicon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "bundleIdentifier": "com.upcriobamba.upcmovil",
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.upcriobamba.upcmovil",
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 1,
+      "backgroundColor": "#635393",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_COARSE_LOCATION",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyByUK0pzxE3Ze08xw2BWyot64SyJL2nIDg"
+        }
+      }
+    },
+    "statusBar": {
+      "barStyle": "light-content",
+      "backgroundColor": "#635393"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-router"
+    ],
+    "owner": "mt3o_24305",
+    "runtimeVersion": "1.0.0",
+    "updates": {},
+    "extra": {
+      "API_URL": "https://zincographical-aiden-subunequal.ngrok-free.dev",
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "49bb0ec7-f951-4b44-a8c4-aa25b23fadee"
+      }
+    }
+  }
 }
