@@ -54,7 +54,7 @@
       "expo-secure-store",
       "expo-router"
     ],
-    "owner": "mt3o_24305",
+    "owner": "shadealex",
     "runtimeVersion": "1.0.0",
     "updates": {},
     "extra": {
@@ -63,7 +63,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "49bb0ec7-f951-4b44-a8c4-aa25b23fadee"
+        "projectId": "e1804a30-77b5-47d6-b273-b003c52a9699"
       }
     }
   }
