@@ -24,17 +24,7 @@ const LoginScreen = () => {
     setLoading(true);
     try {
       const success = await login(data);
-      if (success) {
         setMessage({ type: "success", text: "Inicio de sesión exitoso." });
-
-        const fcmToken = await registerForPushNotificationsAsync();
-        if (fcmToken) {
-          await sendTokenToBackend(fcmToken);
-        }
-
-      } else {
-        // Error message is handled by the login function via interceptor
-      }
     } catch (error) {
       console.error("Error en onSubmit de Login:", error);
       setMessage({ type: "error", text: "Ocurrió un problema inesperado al iniciar sesión." });

@@ -47,28 +47,29 @@ export async function registerForPushNotificationsAsync() {
   }
 }
 
-export async function sendTokenToBackend(fcmToken) { // Renombrado para claridad
+export async function sendTokenToBackend(fcmToken, userId = null) {
   try {
-    const API_URL = Constants.expoConfig?.extra?.API_URL; 
+    const API_URL = Constants.expoConfig?.extra?.API_URL;
     
-    const jwtToken = await getTokenFromStorage();
+    // Si no se pasa userId, intentamos obtenerlo del estado (pero mejor pasarlo explícitamente)
+    if (userId === null) {
+      console.warn("⚠️ sendTokenToBackend llamado sin userId");
+      return;
+    }
 
     const response = await fetch(`${API_URL}/notificacion/token-fcm`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${jwtToken || ''}`,
-      },
-      body: JSON.stringify({ fcmToken: fcmToken }), // Enviamos el string del token
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fcmToken, id_persona: userId }),
     });
 
     if (response.ok) {
-      console.log('✅ Token enviado al backend');
+      console.log('✅ Token FCM gestionado');
     } else {
       const errorText = await response.text();
-      console.error('❌ Error al enviar token:', errorText);
+      console.error('❌ Error al gestionar FCM:', errorText);
     }
   } catch (error) {
-    console.error('❌ Error de red al enviar token:', error);
+    console.error('❌ Error de red al gestionar FCM:', error);
   }
 }

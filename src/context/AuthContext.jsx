@@ -24,10 +24,10 @@ const AuthProvider = ({ children }) => {
     fcmToken: null,
   });
 
-  const handlePushRegistration = async () => {
+  const handlePushRegistration = async (userId) => {
     const token = await registerForPushNotificationsAsync();
     if (token) {
-      await sendTokenToBackend(token);
+      await sendTokenToBackend(token, userId); // 👈 pasamos userId
       setAuthState(prev => ({ ...prev, fcmToken: token }));
     }
   };
@@ -39,14 +39,15 @@ const AuthProvider = ({ children }) => {
         if (token) {
           const decodedToken = parseJwt(token);
           if (decodedToken?.roles?.some(r => [3, 4].includes(r))) {
+            const userId = decodedToken.id_persona;
             setAuthState({
               isAuthenticated: true,
               token,
               role: decodedToken.roles,
-              user: decodedToken.id_persona,
+              user: userId,
               errorLogin: null,
             });
-            await handlePushRegistration();
+            await handlePushRegistration(userId);
           } else {
             await SecureStore.deleteItemAsync("userToken");
             setAuthState({
@@ -84,10 +85,12 @@ const login = async (userData) => {
                     response.data.token
                 );
 
+                const userId = decodedToken.id_persona;
+
                 setAuthState(prevState => ({
                     ...prevState,
                     isAuthenticated: true,
-                    user: decodedToken.id_persona,
+                    user: userId,
                     token: response.data.token,
                     errorLogin: null,
                     role: decodedToken.roles,
@@ -130,17 +133,20 @@ const login = async (userData) => {
         }
     };
 
-  const logout = async () => {
-    await SecureStore.deleteItemAsync("userToken");
-    setAuthState({
-      isAuthenticated: false,
-      user: null,
-      token: null,
-      errorLogin: null,
-      role: null,
-      fcmToken: null,
-    });
-  };
+ const logout = async () => {
+  if (authState.user) {
+    await sendTokenToBackend(null, authState.user); // fcmToken = null → desvincular
+  }
+  await SecureStore.deleteItemAsync("userToken");
+  setAuthState({
+    isAuthenticated: false,
+    user: null,
+    token: null,
+    errorLogin: null,
+    role: null,
+    fcmToken: null,
+  });
+};
 
     function parseJwt(token) {
         try {
