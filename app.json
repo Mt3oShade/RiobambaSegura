@@ -52,7 +52,8 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-router"
+      "expo-router",
+      "expo-notifications"
     ],
     "owner": "shadealex",
     "runtimeVersion": "1.0.0",
