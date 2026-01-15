@@ -24,9 +24,11 @@ const LoginScreen = () => {
     setLoading(true);
     try {
       const success = await login(data);
+      if(success){
         setMessage({ type: "success", text: "Inicio de sesión exitoso." });
+      }
     } catch (error) {
-      console.error("Error en onSubmit de Login:", error);
+      console.error("Error crítico en Login:", error);
       setMessage({ type: "error", text: "Ocurrió un problema inesperado al iniciar sesión." });
     } finally {
       setLoading(false);

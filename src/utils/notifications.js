@@ -35,8 +35,8 @@ export async function registerForPushNotificationsAsync() {
       const token = deviceToken.data; 
 
       console.log('✅ FCM Token:', token);
-      
       return token;
+
     } catch (error) {
       console.error('❌ Error al obtener FCM token:', error);
       return null;
