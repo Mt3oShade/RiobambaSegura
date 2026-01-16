@@ -3,7 +3,7 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { decode as atob } from "base-64";
 import Constants from 'expo-constants';
-import { registerForPushNotificationsAsync, sendTokenToBackend } from "../utils/notifications";
+import { registerForPushNotificationsAsync, saveTokenToBackend, removeTokenFromBackend } from "../utils/notifications";
 import { AppContext } from "./AppContext";
 
 const API_URL = Constants.expoConfig?.extra?.API_URL;
