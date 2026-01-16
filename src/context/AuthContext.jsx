@@ -3,10 +3,13 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { decode as atob } from "base-64";
 import Constants from 'expo-constants';
+// ✅ IMPORTANTE: Importamos las nuevas funciones separadas
 import { registerForPushNotificationsAsync, saveTokenToBackend, removeTokenFromBackend } from "../utils/notifications";
 import { AppContext } from "./AppContext";
 
 const API_URL = Constants.expoConfig?.extra?.API_URL;
+console.log("📌 API en uso:", API_URL);
+
 const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
@@ -14,26 +17,25 @@ const AuthProvider = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
   const [authState, setAuthState] = useState({
     isAuthenticated: false,
-    user: null, // Esto guardará el id_persona
-    token: null,
+    user: null, // ID de la persona
+    token: null, // JWT
     errorLogin: null,
     role: null,
-    fcmToken: null,
+    fcmToken: null, // Token del dispositivo
   });
 
-  // ✅ CORRECCIÓN: Validamos que userId exista antes de intentar registrar
-  const handlePushRegistration = async (userId) => {
-    if (!userId) {
-        console.warn("Intento de registro push sin userId");
-        return;
-    }
-    
-    const token = await registerForPushNotificationsAsync();
-    
-    if (token) {
-      // Esto hará match con tu backend (fcmToken: string, id_persona: userId)
-      await sendTokenToBackend(token, userId); 
-      setAuthState(prev => ({ ...prev, fcmToken: token }));
+  // ✅ HELPER: Gestiona el registro del token FCM al entrar (Login o Auto-login)
+  const handleLoginPush = async () => {
+    try {
+      const token = await registerForPushNotificationsAsync();
+      if (token) {
+        // Llamamos al endpoint de LOGIN (que limpia y asigna)
+        await saveTokenToBackend(token);
+        // Actualizamos el estado local
+        setAuthState(prev => ({ ...prev, fcmToken: token }));
+      }
+    } catch (error) {
+      console.warn("Error en handleLoginPush:", error);
     }
   };
 
@@ -44,6 +46,7 @@ const AuthProvider = ({ children }) => {
         if (token) {
           const decodedToken = parseJwt(token);
           
+          // Validamos Roles (3 o 4)
           if (decodedToken?.roles?.some(r => [3, 4].includes(r))) {
             const userId = decodedToken.id_persona;
             
@@ -53,18 +56,20 @@ const AuthProvider = ({ children }) => {
               role: decodedToken.roles,
               user: userId,
               errorLogin: null,
+              fcmToken: null // Se llenará un instante después
             });
             
-            // ✅ CORRECCIÓN: Pasamos el userId recuperado del token guardado
-            handlePushRegistration(userId); 
+            // ✅ Al recargar la app, refrescamos la vinculación FCM
+            await handleLoginPush(); 
             
           } else {
-            // Si el token es inválido o rol incorrecto, limpiamos
+            // Token inválido o sin permisos
             await logout(); 
           }
         }
       } catch (e) {
         console.warn("Error al cargar token", e);
+        setAuthState(prev => ({ ...prev, isAuthenticated: false }));
       } finally {
         setIsReady(true);
       }
@@ -75,30 +80,34 @@ const AuthProvider = ({ children }) => {
   const login = async (userData) => {
     try {
       const response = await axios.post(`${API_URL}/auth/login`, userData);
-      const decodedToken = parseJwt(response.data.token);
+      const token = response.data.token;
+      const decodedToken = parseJwt(token);
 
       if (decodedToken.roles.includes(3) || decodedToken.roles.includes(4)) {
-        await SecureStore.setItemAsync("userToken", response.data.token);
+        // 1. Guardamos JWT seguro
+        await SecureStore.setItemAsync("userToken", token);
+        
         const userId = decodedToken.id_persona;
 
+        // 2. Actualizamos Estado
         setAuthState({
           isAuthenticated: true,
           user: userId,
-          token: response.data.token,
+          token: token,
           errorLogin: null,
           role: decodedToken.roles,
           fcmToken: null,
         });
 
-        // ✅ CORRECCIÓN CRÍTICA: Pasamos el userId al loguearse
-        await handlePushRegistration(userId);
+        // 3. ✅ Vinculamos FCM (Esto llama a saveTokenToBackend internamente)
+        await handleLoginPush();
         
-        return true; // Retorna true para que el LoginScreen sepa que fue exitoso
+        return true; // Éxito
       } else {
         setAuthState(prev => ({
-            ...prev,
-            isAuthenticated: false,
-            errorLogin: "Acceso no autorizado: Rol insuficiente"
+          ...prev,
+          isAuthenticated: false,
+          errorLogin: "Acceso no autorizado: Rol insuficiente"
         }));
         setMessage({ type: "error", text: "No tienes permisos para acceder." });
         return false;
@@ -116,21 +125,24 @@ const AuthProvider = ({ children }) => {
         errorLogin: errorMessage 
       }));
       
-      return false; // Retorna false para que LoginScreen no muestre éxito
+      return false;
     }
   };
 
   const logout = async () => {
     try {
-      // ✅ CORRECCIÓN: Si hay usuario, enviamos null al backend
-      // Esto hará match con: if (fcmToken === undefined) en tu backend
-      if (authState.user) {
-        await sendTokenToBackend(null, authState.user);
+      // ✅ LOGOUT SEGURO:
+      // Solo intentamos desvincular si tenemos usuario y token FCM en memoria
+      if (authState.user && authState.fcmToken) {
+        console.log("🚪 Ejecutando logout de FCM...");
+        // Llamamos al endpoint de LOGOUT (que valida si el token coincide antes de borrar)
+        await removeTokenFromBackend(authState.user, authState.fcmToken);
       }
     } catch (e) {
-      console.warn("No se pudo notificar al backend del logout", e);
+      console.warn("Error no crítico en logout FCM", e);
     }
 
+    // Limpieza local
     await SecureStore.deleteItemAsync("userToken");
     setAuthState({
       isAuthenticated: false,
