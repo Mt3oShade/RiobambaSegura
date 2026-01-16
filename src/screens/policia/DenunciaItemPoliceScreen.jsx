@@ -8,6 +8,9 @@ import {
   FlatList,
   RefreshControl,
   ScrollView,
+  Linking,
+  Platform,
+  TouchableOpacity
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { Button, TextInput, Title, Paragraph } from "react-native-paper";
@@ -199,18 +202,50 @@ const DenunciaItemPoliceScreen = () => {
           <Text style={styles.sectionHeader}>Ubicación del Incidente</Text>
           <View style={styles.mapContainer}>
             {(() => {
-              const [lat, lng] = denuncia.puntoGPS.split(',').map(Number);
+              // 1. Validar y extraer coordenadas
+              const partes = denuncia.puntoGPS.split(',');
+              if (partes.length !== 2) return <Text>Coordenadas inválidas</Text>;
+              
+              const [lat, lng] = partes.map(Number);
               const region = { latitude: lat, longitude: lng, latitudeDelta: 0.005, longitudeDelta: 0.005 };
+
+              // 2. Función para abrir Waze, Google Maps o Apple Maps
+              const openMapApp = () => {
+                const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
+                const latLng = `${lat},${lng}`;
+                const label = 'Ubicación del Incidente';
+                
+                const url = Platform.select({
+                  ios: `${scheme}${label}@${latLng}`,
+                  android: `${scheme}${latLng}(${label})`
+                });
+
+                Linking.openURL(url).catch(() => {
+                   // Fallback al navegador si no hay app de mapas
+                   Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`);
+                });
+              };
+
               return (
-                <MapView
-                  style={styles.map}
-                  region={region}
-                  scrollEnabled={false}
-                  zoomEnabled={true}
-                  toolbarEnabled={false}
-                >
-                  <Marker coordinate={region} />
-                </MapView>
+                <TouchableOpacity onPress={openMapApp} activeOpacity={0.8} style={{flex: 1}}>
+                  <MapView
+                    style={styles.map}
+                    region={region}
+                    scrollEnabled={false}
+                    zoomEnabled={false}
+                    pitchEnabled={false}
+                    rotateEnabled={false}
+                    toolbarEnabled={false}
+                    liteMode={true} // Mejora rendimiento en Android
+                    pointerEvents="none" // 👈 ESTO ES CLAVE: Pasa el clic al TouchableOpacity
+                  >
+                    <Marker coordinate={region} />
+                  </MapView>
+                  {/* Etiqueta visual opcional para indicar que es tocable */}
+                  <View style={{position: 'absolute', bottom: 5, right: 5, backgroundColor: 'rgba(255,255,255,0.8)', padding: 4, borderRadius: 4}}>
+                    <Text style={{fontSize: 10, fontWeight: 'bold'}}>Tocar para abrir 📍</Text>
+                  </View>
+                </TouchableOpacity>
               );
             })()}
           </View>

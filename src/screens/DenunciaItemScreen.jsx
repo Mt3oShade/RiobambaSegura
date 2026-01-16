@@ -6,6 +6,9 @@ import {
   ActivityIndicator,
   FlatList,
   ScrollView,
+  Linking,
+  Platform,
+  TouchableOpacity
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { Card, Title, Paragraph } from "react-native-paper";
@@ -148,12 +151,50 @@ const DenunciaItemScreen = () => {
           <Text style={styles.sectionHeader}>Ubicación del Incidente</Text>
           <View style={styles.mapContainer}>
             {(() => {
-              const [lat, lng] = denuncia.puntoGPS.split(',').map(Number);
+              // 👇 2. LOGICA PARA ABRIR MAPAS EXTERNOS
+              const partes = denuncia.puntoGPS.split(',');
+              // Validación simple para evitar crashes si el formato es incorrecto
+              if (partes.length !== 2) return null;
+
+              const [lat, lng] = partes.map(Number);
               const region = { latitude: lat, longitude: lng, latitudeDelta: 0.005, longitudeDelta: 0.005 };
+
+              const openMapApp = () => {
+                const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
+                const latLng = `${lat},${lng}`;
+                const label = 'Ubicación del Incidente';
+                
+                const url = Platform.select({
+                  ios: `${scheme}${label}@${latLng}`,
+                  android: `${scheme}${latLng}(${label})`
+                });
+
+                Linking.openURL(url).catch(() => {
+                   Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`);
+                });
+              };
+
               return (
-                <MapView style={styles.map} region={region} scrollEnabled={false} zoomEnabled={true}>
-                  <Marker coordinate={region} />
-                </MapView>
+                <TouchableOpacity onPress={openMapApp} activeOpacity={0.8} style={{flex: 1}}>
+                  <MapView 
+                    style={styles.map} 
+                    region={region} 
+                    scrollEnabled={false} 
+                    zoomEnabled={false} // Desactivado para que no interfiera con el toque
+                    pitchEnabled={false}
+                    rotateEnabled={false}
+                    toolbarEnabled={false}
+                    liteMode={true}
+                    pointerEvents="none" // Importante para pasar el toque al botón
+                  >
+                    <Marker coordinate={region} />
+                  </MapView>
+                  
+                  {/* Etiqueta visual pequeña */}
+                  <View style={{position: 'absolute', bottom: 5, right: 5, backgroundColor: 'rgba(255,255,255,0.8)', padding: 4, borderRadius: 4}}>
+                    <Text style={{fontSize: 10, fontWeight: 'bold', color: '#333'}}>Tocame 📍</Text>
+                  </View>
+                </TouchableOpacity>
               );
             })()}
           </View>
